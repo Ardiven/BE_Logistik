@@ -5,7 +5,7 @@ async function migrate() {
         console.log('Adding assigned_by_name to room_requests...');
         try {
             await db.query('ALTER TABLE room_requests ADD COLUMN assigned_by_name VARCHAR(100) NULL');
-            console.log('Column assigned_by_name added.');
+            console.log('Column assigned_by_name added. ');
         } catch (e) {
             console.log('Column assigned_by_name may already exist or error:', e.message);
         }

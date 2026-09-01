@@ -2,7 +2,7 @@ const db = require('../config/database');
 
 exports.getGroups = async (req, res) => {
     try {
-        const [rows] = await db.query('SELECT * FROM tps.mentor ORDER BY nama ASC');
+        const [rows] = await db.query('SELECT * FROM mentor ORDER BY nama ASC');
         const groups = rows.map(r => ({
             id: r.id,
             groupNumber: r.id, // Using id as group number
