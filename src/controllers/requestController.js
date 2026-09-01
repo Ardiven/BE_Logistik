@@ -34,7 +34,7 @@ exports.createRequest = async (req, res) => {
 
         // Generate Ticket Code
         const d = new Date(requestedDate);
-        const code = `KTB-${('0'+(d.getMonth()+1)).slice(-2)}${('0'+d.getDate()).slice(-2)}-${Math.random().toString(36).substring(2,6).toUpperCase()}`;
+        const code = `KTB-${('0' + (d.getMonth() + 1)).slice(-2)}${('0' + d.getDate()).slice(-2)}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
 
         const [result] = await db.query(`
             INSERT INTO room_requests 
