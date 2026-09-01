@@ -14,7 +14,7 @@ exports.getMatrix = async (req, res) => {
                    r.assigned_by_name AS assignedByName,
                    COALESCE(r.leader_name, m.nama) AS leaderName,
                    COALESCE(r.leader_contact, m.line) AS leaderContact
-            FROM tps.mentor m
+            FROM mentor m
             JOIN room_requests r ON m.id = r.group_id 
         `;
         let params = [];
@@ -71,7 +71,7 @@ exports.assignRoom = async (req, res) => {
         const [[request]] = await db.query(`
             SELECT r.*, m.nama as group_name 
             FROM room_requests r 
-            JOIN tps.mentor m ON r.group_id = m.id 
+            JOIN mentor m ON r.group_id = m.id 
             WHERE r.id = ?
         `, [id]);
 
@@ -134,7 +134,7 @@ exports.rejectRoom = async (req, res) => {
         const [[request]] = await db.query(`
             SELECT r.*, m.nama as group_name 
             FROM room_requests r 
-            JOIN tps.mentor m ON r.group_id = m.id 
+            JOIN mentor m ON r.group_id = m.id 
             WHERE r.id = ?
         `, [id]);
 
