@@ -172,8 +172,33 @@ const sendProcessEmail = async (data) => {
     }
 };
 
+const sendEmail = async (to, subject, html) => {
+    try {
+        if (!transporter) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const info = await transporter.sendMail({
+            from: '"TPS Logistik" <no-reply@tps.petra.ac.id>',
+            to,
+            subject,
+            html,
+        });
+
+        console.log('Email sent: %s', info.messageId);
+        if (info.messageId && process.env.SMTP_HOST === undefined) {
+             console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        }
+        return true;
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return false;
+    }
+};
+
 module.exports = {
     sendAssignmentEmail,
     sendRejectionEmail,
-    sendProcessEmail
+    sendProcessEmail,
+    sendEmail
 };
