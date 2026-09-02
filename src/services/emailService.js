@@ -122,7 +122,13 @@ const sendRejectionEmail = async (data) => {
                     <h2 style="color: #F44336;">Permohonan Ruangan Ditolak</h2>
                     <p>Halo Ketua ${data.groupName},</p>
                     <p>Mohon maaf, permohonan peminjaman ruangan KTB Anda untuk tanggal <strong>${new Date(data.date).toLocaleDateString('id-ID')}</strong> jam <strong>${data.startTime} - ${data.endTime}</strong> terpaksa <strong>ditolak</strong>.</p>
-                    <p>Alasan penolakan mungkin dikarenakan ruangan penuh atau jadwal tidak memungkinkan. Silakan ajukan permohonan kembali dengan jadwal atau ruangan yang berbeda.</p>
+                    
+                    <div style="background-color: #fce4e4; border-left: 4px solid #f44336; padding: 15px; margin: 20px 0;">
+                        <h4 style="margin-top: 0; color: #d32f2f;">Alasan Penolakan:</h4>
+                        <p style="margin-bottom: 0;">${data.reason || 'Tidak ada alasan khusus.'}</p>
+                    </div>
+
+                    <p>Silakan ajukan permohonan kembali dengan jadwal atau ruangan yang berbeda.</p>
                     <p>Salam,<br>Tim Logistik TPS</p>
                 </div>
             `,

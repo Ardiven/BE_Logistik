@@ -118,13 +118,14 @@ exports.assignRoom = async (req, res) => {
 
 exports.rejectRoom = async (req, res) => {
     const { id } = req.params;
+    const { reason } = req.body;
 
     try {
         const [result] = await db.query(`
             UPDATE room_requests 
-            SET status = 'REJECTED'
+            SET status = 'REJECTED', logistics_notes = ?
             WHERE id = ?
-        `, [id]);
+        `, [reason || null, id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, error: 'Request not found' });
@@ -144,7 +145,8 @@ exports.rejectRoom = async (req, res) => {
                 groupName: request.group_name,
                 date: request.requested_date,
                 startTime: request.start_time,
-                endTime: request.end_time
+                endTime: request.end_time,
+                reason: reason || 'Tidak ada alasan khusus.'
             });
         }
 
