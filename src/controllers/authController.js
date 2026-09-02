@@ -63,7 +63,7 @@ const getPetraName = async (username) => {
 };
 
 exports.login = async (req, res) => {
-    let { username, password, role } = req.body; // role: 'ASTOR' or 'LOGISTIK'
+    let { username, password, role } = req.body; // role: 'KETUA_KELOMPOK', 'MENTOR', or 'LOGISTIK'
 
     if (!username || !password || !role) {
         return res.status(400).json({ success: false, message: 'Harap isi NRP/Username, Password, dan Role' });
@@ -81,8 +81,13 @@ exports.login = async (req, res) => {
             if (rows.length > 0) {
                 user = rows[0];
             }
-        } else if (role === 'ASTOR') {
-            const [rows] = await db.query('SELECT * FROM astor WHERE nrp = ?', [username]);
+        } else if (role === 'KETUA_KELOMPOK') {
+            const [rows] = await db.query('SELECT * FROM ketua_kelompok WHERE nrp = ?', [username]);
+            if (rows.length > 0) {
+                user = rows[0];
+            }
+        } else if (role === 'MENTOR') {
+            const [rows] = await db.query('SELECT * FROM mentor WHERE nrp = ?', [username]);
             if (rows.length > 0) {
                 user = rows[0];
             }

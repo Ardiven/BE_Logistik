@@ -112,7 +112,7 @@ exports.assignRoom = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, error: 'Database error' });
+        res.status(500).json({ success: false, error: 'Database error ' + err });
     }
 };
 
@@ -155,7 +155,7 @@ exports.rejectRoom = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, error: 'Database error' });
+        res.status(500).json({ success: false, error: 'Database error ' + err });
     }
 };
 
@@ -205,6 +205,6 @@ exports.processRoom = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, error: 'Database error' });
+        res.status(500).json({ success: false, error: 'Database error ' + err });
     }
 };
