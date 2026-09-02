@@ -22,6 +22,7 @@ app.post('/api/requests', verifyToken, verifyRole(['ASTOR']), requestController.
 app.get('/api/logistics/matrix', verifyToken, logisticsController.getMatrix);
 app.patch('/api/logistics/requests/:id/assign', verifyToken, verifyRole(['LOGISTIK']), logisticsController.assignRoom);
 app.patch('/api/logistics/requests/:id/reject', verifyToken, verifyRole(['LOGISTIK']), logisticsController.rejectRoom);
+app.patch('/api/logistics/requests/:id/process', verifyToken, verifyRole(['LOGISTIK']), logisticsController.processRoom);
 
 
 const PORT = process.env.PORT || 3000;

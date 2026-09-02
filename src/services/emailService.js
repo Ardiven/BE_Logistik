@@ -139,7 +139,41 @@ const sendRejectionEmail = async (data) => {
     }
 };
 
+const sendProcessEmail = async (data) => {
+    try {
+        if (!transporter) {
+            await new Promise(resolve => setTimeout(resolve, 1000));
+        }
+
+        const info = await transporter.sendMail({
+            from: '"TPS Logistik" <no-reply@tps.petra.ac.id>',
+            to: data.to,
+            subject: 'Pemberitahuan: Permohonan Ruangan Sedang Diproses',
+            html: `
+                <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
+                    <h2 style="color: #2196F3;">Permohonan Ruangan Sedang Diproses</h2>
+                    <p>Halo Ketua ${data.groupName},</p>
+                    <p>Permohonan peminjaman ruangan KTB Anda untuk tanggal <strong>${new Date(data.date).toLocaleDateString('id-ID')}</strong> jam <strong>${data.startTime} - ${data.endTime}</strong> saat ini sedang <strong>diproses</strong> oleh tim logistik.</p>
+                    <p><strong>Diproses Oleh:</strong> ${data.processedByName}</p>
+                    <p>Tim logistik sedang mencarikan ruangan yang tersedia. Anda akan menerima email selanjutnya ketika ruangan telah ditetapkan atau jika ada kendala.</p>
+                    <p>Salam,<br>Tim Logistik TPS</p>
+                </div>
+            `,
+        });
+
+        console.log('Process Email sent: %s', info.messageId);
+        if (info.messageId && process.env.SMTP_HOST === undefined) {
+             console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+        }
+        return true;
+    } catch (error) {
+        console.error('Error sending email:', error);
+        return false;
+    }
+};
+
 module.exports = {
     sendAssignmentEmail,
-    sendRejectionEmail
+    sendRejectionEmail,
+    sendProcessEmail
 };

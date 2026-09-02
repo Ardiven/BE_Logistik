@@ -12,6 +12,7 @@ exports.getMatrix = async (req, res) => {
                    r.requested_date AS requestedDate, r.start_time AS startTime, 
                    r.end_time AS endTime, r.assigned_room AS assignedRoom,
                    r.assigned_by_name AS assignedByName,
+                   r.processed_by_name AS processedByName,
                    COALESCE(r.leader_name, m.nama) AS leaderName,
                    COALESCE(r.leader_contact, m.line) AS leaderContact
             FROM mentor m
@@ -37,6 +38,7 @@ exports.getMatrix = async (req, res) => {
             endTime: r.endTime || null,
             assignedRoom: r.assignedRoom || null,
             assignedByName: r.assignedByName || null,
+            processedByName: r.processedByName || null,
             leaderName: r.leaderName,
             leaderContact: r.leaderContact
         }));
@@ -148,9 +150,59 @@ exports.rejectRoom = async (req, res) => {
             });
         }
 
-        res.json({
+                res.json({
             success: true,
             message: "Permohonan ruangan berhasil ditolak."
+        });
+
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: 'Database error' });
+    }
+};
+
+exports.processRoom = async (req, res) => {
+    const { id } = req.params;
+    const processedByName = req.user ? req.user.name : 'Logistik'; // from auth middleware
+
+    try {
+        const [result] = await db.query(`
+            UPDATE room_requests 
+            SET processed_by_name = ?, status = 'PROSES'
+            WHERE id = ?
+        `, [processedByName, id]);
+
+        if (result.affectedRows === 0) {
+            return res.status(404).json({ success: false, error: 'Request not found' });
+        }
+
+        // Fetch the updated request to send email
+        const [[request]] = await db.query(`
+            SELECT r.*, m.nama as group_name 
+            FROM room_requests r 
+            JOIN mentor m ON r.group_id = m.id 
+            WHERE r.id = ?
+        `, [id]);
+
+        if (request && request.leader_email) {
+            emailService.sendProcessEmail({
+                to: request.leader_email,
+                groupName: request.group_name,
+                date: request.requested_date,
+                startTime: request.start_time,
+                endTime: request.end_time,
+                processedByName: processedByName
+            });
+        }
+
+        res.json({
+            success: true,
+            message: "Permohonan ruangan sedang diproses.",
+            data: {
+                requestId: parseInt(id),
+                status: "PROSES",
+                processedByName
+            }
         });
 
     } catch (err) {
