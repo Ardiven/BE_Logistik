@@ -47,7 +47,7 @@ exports.getMatrix = async (req, res) => {
 
     } catch (err) {
         console.error(err);
-        res.status(500).json({ success: false, error: 'Database error' });
+        res.status(500).json({ success: false, error: 'Database error ' + err });
     }
 };
 
