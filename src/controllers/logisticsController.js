@@ -5,7 +5,7 @@ exports.getMatrix = async (req, res) => {
     const { date } = req.query;
     try {
         // Find requests for a specific date.
-        
+
         let query = `
             SELECT m.id AS groupId, m.id AS groupNumber, m.nama AS groupName,
                    r.id AS requestId, r.ticket_code AS ticketCode, r.status, 
@@ -19,13 +19,13 @@ exports.getMatrix = async (req, res) => {
             JOIN room_requests r ON m.id = r.group_id 
         `;
         let params = [];
-        
+
         query += ` AND r.requested_date BETWEEN CURDATE() AND DATE_ADD(CURDATE(), INTERVAL 10 DAY) AND r.status != 'REJECTED'`;
 
         query += ` ORDER BY m.nama ASC`;
 
         const [rows] = await db.query(query, params);
-        
+
         const matrix = rows.map(r => ({
             groupNumber: r.groupNumber,
             groupName: r.groupName,
@@ -79,14 +79,14 @@ exports.assignRoom = async (req, res) => {
 
         const lineId = request.leader_contact;
         const lineUrl = `https://line.me/ti/p/~${lineId}`;
-        
+
         const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
 
         // Send Email if applicable
         if (request.leader_email || logisticEmail) {
             const toEmail = request.leader_email || logisticEmail;
             const ccEmail = request.leader_email && logisticEmail ? logisticEmail : undefined;
-            
+
             emailService.sendAssignmentEmail({
                 to: toEmail,
                 cc: ccEmail,
@@ -150,7 +150,7 @@ exports.rejectRoom = async (req, res) => {
             });
         }
 
-                res.json({
+        res.json({
             success: true,
             message: "Permohonan ruangan berhasil ditolak."
         });
@@ -168,7 +168,7 @@ exports.processRoom = async (req, res) => {
     try {
         const [result] = await db.query(`
             UPDATE room_requests 
-            SET processed_by_name = ?, status = 'PROSES'
+            SET assigned_by_name = ?, status = 'PROSES'
             WHERE id = ?
         `, [processedByName, id]);
 
