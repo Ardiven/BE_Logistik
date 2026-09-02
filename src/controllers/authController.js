@@ -9,9 +9,9 @@ const authenticatePOP3 = (username, password) => {
     return new Promise((resolve, reject) => {
         const client = new net.Socket();
         let step = 0;
-        
+
         client.setTimeout(15000); // 15 seconds timeout
-        
+
         client.connect(110, 'john.petra.ac.id', () => {
             // Connected
         });
@@ -68,7 +68,7 @@ exports.login = async (req, res) => {
     if (!username || !password || !role) {
         return res.status(400).json({ success: false, message: 'Harap isi NRP/Username, Password, dan Role' });
     }
-    
+
     // As per PHP code: substr($username, 0, 9)
     username = username.substring(0, 9);
 
@@ -85,6 +85,7 @@ exports.login = async (req, res) => {
             const [rows] = await db.query('SELECT * FROM ketua_kelompok WHERE nrp = ?', [username]);
             if (rows.length > 0) {
                 user = rows[0];
+                console.log('User found:', user);
             }
         } else if (role === 'MENTOR') {
             const [rows] = await db.query('SELECT * FROM mentor WHERE nrp = ?', [username]);
@@ -106,18 +107,18 @@ exports.login = async (req, res) => {
         } catch (e) {
             console.log('POP3 Auth error:', e.message);
         }
-        
+
         // Fallback for local development or if POP3 fails
         if (!isAuthenticated) {
             // Check if password matches the database password OR is the universal bypass password 'rahasia'
             if (user.password !== password && password !== 'rahasia') {
-                return res.status(401).json({ 
-                    success: false, 
-                    message: 'Koneksi ke server email Petra gagal (ECONNREFUSED) dan password lokal tidak cocok. Gunakan password "rahasia" untuk testing.' 
+                return res.status(401).json({
+                    success: false,
+                    message: 'Koneksi ke server email Petra gagal (ECONNREFUSED) dan password lokal tidak cocok. Gunakan password "rahasia" untuk testing.'
                 });
             }
         }
-        
+
         // Try fetching name from Finger API if it's not set
         let name = user.nama || user.nrp;
         if (!user.nama || user.nama === '') {
@@ -126,9 +127,9 @@ exports.login = async (req, res) => {
         }
 
         const token = jwt.sign(
-            { 
-                id: user.id, 
-                nrp: user.nrp, 
+            {
+                id: user.id,
+                nrp: user.nrp,
                 role,
                 name: name
             },
