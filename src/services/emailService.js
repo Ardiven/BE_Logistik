@@ -154,7 +154,7 @@ const sendProcessEmail = async (data) => {
                     <h2 style="color: #2196F3;">Permohonan Ruangan Sedang Diproses</h2>
                     <p>Halo Ketua ${data.groupName},</p>
                     <p>Permohonan peminjaman ruangan KTB Anda untuk tanggal <strong>${new Date(data.date).toLocaleDateString('id-ID')}</strong> jam <strong>${data.startTime} - ${data.endTime}</strong> saat ini sedang <strong>diproses</strong> oleh tim logistik.</p>
-                    <p><strong>Diproses Oleh:</strong> ${data.processedByName}</p>
+                    <p><strong>Diproses Oleh:</strong> ${data.assignedByName}</p>
                     <p>Tim logistik sedang mencarikan ruangan yang tersedia. Anda akan menerima email selanjutnya ketika ruangan telah ditetapkan atau jika ada kendala.</p>
                     <p>Salam,<br>Tim Logistik TPS</p>
                 </div>

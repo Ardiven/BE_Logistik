@@ -12,7 +12,6 @@ exports.getMatrix = async (req, res) => {
                    r.requested_date AS requestedDate, r.start_time AS startTime, 
                    r.end_time AS endTime, r.assigned_room AS assignedRoom,
                    r.assigned_by_name AS assignedByName,
-                   r.processed_by_name AS processedByName,
                    COALESCE(r.leader_name, m.nama) AS leaderName,
                    COALESCE(r.leader_contact, m.line) AS leaderContact
             FROM mentor m
@@ -38,7 +37,6 @@ exports.getMatrix = async (req, res) => {
             endTime: r.endTime || null,
             assignedRoom: r.assignedRoom || null,
             assignedByName: r.assignedByName || null,
-            processedByName: r.processedByName || null,
             leaderName: r.leaderName,
             leaderContact: r.leaderContact
         }));
@@ -163,14 +161,14 @@ exports.rejectRoom = async (req, res) => {
 
 exports.processRoom = async (req, res) => {
     const { id } = req.params;
-    const processedByName = req.user ? req.user.name : 'Logistik'; // from auth middleware
+    const assignedByName = req.user ? req.user.name : 'Logistik'; // from auth middleware
 
     try {
         const [result] = await db.query(`
             UPDATE room_requests 
             SET assigned_by_name = ?, status = 'PROSES'
             WHERE id = ?
-        `, [processedByName, id]);
+        `, [assignedByName, id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, error: 'Request not found' });
@@ -191,7 +189,7 @@ exports.processRoom = async (req, res) => {
                 date: request.requested_date,
                 startTime: request.start_time,
                 endTime: request.end_time,
-                processedByName: processedByName
+                assignedByName
             });
         }
 
@@ -201,7 +199,7 @@ exports.processRoom = async (req, res) => {
             data: {
                 requestId: parseInt(id),
                 status: "PROSES",
-                processedByName
+                assignedByName
             }
         });
 
