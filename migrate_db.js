@@ -49,7 +49,8 @@ async function migrate() {
             await db.query(`CREATE TABLE IF NOT EXISTS ketua_kelompok (
                 id INT AUTO_INCREMENT PRIMARY KEY,
                 nrp VARCHAR(50) NOT NULL UNIQUE,
-                nama VARCHAR(255) NOT NULL
+                nama VARCHAR(255) NOT NULL,
+                password VARCHAR(255) NULL
             )`);
             console.log('Table ketua_kelompok created.');
         } catch (e) {

@@ -77,12 +77,23 @@ exports.login = async (req, res) => {
 
         // Check database first if user has the correct role
         if (role === 'LOGISTIK') {
-            const [rows] = await db.query('SELECT * FROM admin WHERE nrp = ? AND bidang = ?', [username, 'logistik']);
+            const [rows] = await db.query(`
+                SELECT * FROM data_tim 
+                WHERE nrp = ? AND (
+                    tim = 'logistik' OR 
+                    (role = 'BPH' AND bidang = 'office')
+                )
+            `, [username]);
             if (rows.length > 0) {
                 user = rows[0];
             }
         } else if (role === 'KETUA_KELOMPOK') {
-            const [rows] = await db.query('SELECT * FROM ketua_kelompok WHERE nrp = ?', [username]);
+            const [rows] = await db.query(`
+                SELECT k.id, k.nrp, a.nama, a.password 
+                FROM ketua_kelompok k 
+                LEFT JOIN astor a ON k.nrp = a.nrp 
+                WHERE k.nrp = ?
+            `, [username]);
             if (rows.length > 0) {
                 user = rows[0];
                 console.log('User found:', user);
@@ -131,7 +142,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 nrp: user.nrp,
                 role,
-                name: name
+                name: name,
+                teamRole: role === 'LOGISTIK' ? user.role : undefined
             },
             JWT_SECRET,
             { expiresIn: '8h' }
@@ -144,7 +156,8 @@ exports.login = async (req, res) => {
                 id: user.id,
                 nrp: user.nrp,
                 name: name,
-                role
+                role,
+                teamRole: role === 'LOGISTIK' ? user.role : undefined
             }
         });
 

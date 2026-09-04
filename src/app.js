@@ -6,6 +6,7 @@ const groupController = require('./controllers/groupController');
 const requestController = require('./controllers/requestController');
 const logisticsController = require('./controllers/logisticsController');
 const authController = require('./controllers/authController');
+const settingsController = require('./controllers/settingsController');
 const { verifyToken, verifyRole } = require('./middleware/auth');
 const cronService = require('./services/cronService');
 
@@ -19,11 +20,15 @@ app.post('/api/auth/login', authController.login);
 // Protected routes
 app.get('/api/groups', verifyToken, groupController.getGroups);
 app.post('/api/requests', verifyToken, verifyRole(['KETUA_KELOMPOK', 'MENTOR']), requestController.createRequest);
+app.get('/api/requests/my', verifyToken, verifyRole(['KETUA_KELOMPOK', 'MENTOR']), requestController.getMyRequests);
 
 app.get('/api/logistics/matrix', verifyToken, logisticsController.getMatrix);
 app.patch('/api/logistics/requests/:id/assign', verifyToken, verifyRole(['LOGISTIK']), logisticsController.assignRoom);
 app.patch('/api/logistics/requests/:id/reject', verifyToken, verifyRole(['LOGISTIK']), logisticsController.rejectRoom);
 app.patch('/api/logistics/requests/:id/process', verifyToken, verifyRole(['LOGISTIK']), logisticsController.processRoom);
+
+app.get('/api/settings', verifyToken, verifyRole(['LOGISTIK']), settingsController.getSettings);
+app.put('/api/settings', verifyToken, verifyRole(['LOGISTIK']), settingsController.updateSettings);
 
 
 const PORT = process.env.PORT || 3000;

@@ -2,7 +2,8 @@ const db = require('../config/database');
 const emailService = require('../services/emailService');
 
 exports.createRequest = async (req, res) => {
-    const { groupId, leaderName, leaderContact, leaderEmail, preferredChannel, requestedDate, startTime, endTime } = req.body;
+    const { groupId, requestedDate, startTime, endTime } = req.body;
+    const submittedByNrp = req.user ? req.user.nrp : null;
 
     try {
         // H-3 Validation
@@ -39,12 +40,16 @@ exports.createRequest = async (req, res) => {
 
         const [result] = await db.query(`
             INSERT INTO room_requests 
-            (ticket_code, group_id, leader_name, leader_contact, leader_email, preferred_channel, requested_date, start_time, end_time, status)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'PENDING')
-        `, [code, groupId, leaderName, leaderContact, leaderEmail, preferredChannel || 'WHATSAPP', requestedDate, startTime, endTime]);
+            (ticket_code, group_id, requested_date, start_time, end_time, status, submitted_by_nrp)
+            VALUES (?, ?, ?, ?, ?, 'PENDING', ?)
+        `, [code, groupId, requestedDate, startTime, endTime, submittedByNrp]);
+
+        // Fetch mentor name for email
+        const [[mentor]] = await db.query('SELECT nama FROM mentor WHERE id = ?', [groupId]);
+        const mentorName = mentor ? mentor.nama : 'Unknown';
 
         // Send email notification to logistics team members
-        db.query('SELECT nrp FROM admin WHERE bidang = ?', ['logistik']).then(([admins]) => {
+        db.query("SELECT nrp FROM data_tim WHERE tim = 'logistik' OR (role = 'BPH' AND bidang = 'office')").then(([admins]) => {
             if (admins && admins.length > 0) {
                 const notifSubject = `Pengajuan Ruangan Baru: ${code} - KTB ${groupId}`;
                 const notifHtml = `
@@ -55,7 +60,7 @@ exports.createRequest = async (req, res) => {
                         <ul>
                             <li><strong>Tiket:</strong> ${code}</li>
                             <li><strong>Kelompok (ID):</strong> ${groupId}</li>
-                            <li><strong>Ketua:</strong> ${leaderName}</li>
+                            <li><strong>Ketua/Mentor:</strong> ${mentorName}</li>
                             <li><strong>Tanggal:</strong> ${new Date(requestedDate).toLocaleDateString('id-ID')}</li>
                             <li><strong>Waktu:</strong> ${startTime} - ${endTime}</li>
                         </ul>
@@ -87,3 +92,34 @@ exports.createRequest = async (req, res) => {
         res.status(500).json({ success: false, error: 'Database error' });
     }
 };
+
+exports.getMyRequests = async (req, res) => {
+    try {
+        const nrp = req.user.nrp;
+        const role = req.user.role;
+        const userId = req.user.id;
+
+        let query = '';
+        let queryParams = [];
+
+        if (role === 'MENTOR') {
+            // Mentor can see requests associated with their group_id (which is their mentor id)
+            // or requests they submitted themselves
+            query = 'SELECT * FROM room_requests WHERE group_id = ? OR submitted_by_nrp = ? ORDER BY created_at DESC';
+            queryParams = [userId, nrp];
+        } else if (role === 'KETUA_KELOMPOK') {
+            // Ketua Kelompok sees requests they submitted
+            query = 'SELECT * FROM room_requests WHERE submitted_by_nrp = ? ORDER BY created_at DESC';
+            queryParams = [nrp];
+        } else {
+            return res.status(403).json({ success: false, error: 'Unauthorized role' });
+        }
+
+        const [rows] = await db.query(query, queryParams);
+        res.json({ success: true, data: rows });
+    } catch (err) {
+        console.error(err);
+        res.status(500).json({ success: false, error: 'Database error' });
+    }
+};
+

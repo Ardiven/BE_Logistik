@@ -12,8 +12,10 @@ exports.getMatrix = async (req, res) => {
                    r.requested_date AS requestedDate, r.start_time AS startTime, 
                    r.end_time AS endTime, r.assigned_room AS assignedRoom,
                    r.assigned_by_name AS assignedByName,
-                   COALESCE(r.leader_name, m.nama) AS leaderName,
-                   COALESCE(r.leader_contact, m.line) AS leaderContact
+                   r.assigned_by_name AS assignedByName,
+                   r.processed_by_nrp AS processedByNrp,
+                   m.nama AS mentorName,
+                   m.line AS mentorContact
             FROM mentor m
             JOIN room_requests r ON m.id = r.group_id 
         `;
@@ -37,8 +39,9 @@ exports.getMatrix = async (req, res) => {
             endTime: r.endTime || null,
             assignedRoom: r.assignedRoom || null,
             assignedByName: r.assignedByName || null,
-            leaderName: r.leaderName,
-            leaderContact: r.leaderContact
+            processedByNrp: r.processedByNrp || null,
+            mentorName: r.mentorName,
+            mentorContact: r.mentorContact
         }));
 
         res.json({
@@ -55,35 +58,65 @@ exports.assignRoom = async (req, res) => {
     const { id } = req.params;
     const { assignedRoom, logisticsNotes } = req.body;
     const assignedByName = req.user ? req.user.name : 'Logistik'; // from auth middleware
+    const userNrp = req.user ? req.user.nrp : null;
+    const teamRole = req.user ? req.user.teamRole : null;
 
     try {
+        // Check if processed by another admin
+        const [[requestData]] = await db.query(`SELECT status, processed_by_nrp FROM room_requests WHERE id = ?`, [id]);
+        if (requestData && requestData.status === 'PROSES' && requestData.processed_by_nrp && requestData.processed_by_nrp !== userNrp) {
+            return res.status(403).json({ success: false, error: 'Permohonan ini sedang diproses oleh admin lain.' });
+        }
+
+        // Fetch the request to check for conflicts
+        const [[request]] = await db.query(`
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
+            FROM room_requests r 
+            JOIN mentor m ON r.group_id = m.id 
+            WHERE r.id = ?
+        `, [id]);
+
+        if (!request) {
+            return res.status(404).json({ success: false, error: 'Request not found' });
+        }
+
+        // Smart Conflict Detector
+        if (assignedRoom && assignedRoom.trim() !== '') {
+            const [conflicts] = await db.query(`
+                SELECT group_id, start_time, end_time 
+                FROM room_requests 
+                WHERE assigned_room = ? 
+                  AND requested_date = ? 
+                  AND status = 'ASSIGNED' 
+                  AND id != ?
+                  AND start_time < ? 
+                  AND end_time > ?
+            `, [assignedRoom.trim(), request.requested_date, id, request.end_time, request.start_time]);
+
+            if (conflicts.length > 0) {
+                const c = conflicts[0];
+                return res.status(409).json({ 
+                    success: false, 
+                    error: `Ruangan ${assignedRoom} bentrok dengan kelompok KTB ${c.group_id} pada jam ${c.start_time.slice(0, 5)} - ${c.end_time.slice(0, 5)}.`
+                });
+            }
+        }
+
         const [result] = await db.query(`
             UPDATE room_requests 
             SET assigned_room = ?, logistics_notes = ?, assigned_by_name = ?, status = 'ASSIGNED'
             WHERE id = ?
         `, [assignedRoom, logisticsNotes, assignedByName, id]);
 
-        if (result.affectedRows === 0) {
-            return res.status(404).json({ success: false, error: 'Request not found' });
-        }
-
-        // Fetch the updated request to generate the WhatsApp URL
-        const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name 
-            FROM room_requests r 
-            JOIN mentor m ON r.group_id = m.id 
-            WHERE r.id = ?
-        `, [id]);
-
-        const lineId = request.leader_contact;
+        const lineId = request.mentor_contact;
         const lineUrl = `https://line.me/ti/p/~${lineId}`;
 
         const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
 
         // Send Email if applicable
-        if (request.leader_email || logisticEmail) {
-            const toEmail = request.leader_email || logisticEmail;
-            const ccEmail = request.leader_email && logisticEmail ? logisticEmail : undefined;
+        if (request.mentor_email || logisticEmail) {
+            const toEmail = request.mentor_email || logisticEmail;
+            const ccEmail = request.mentor_email && logisticEmail ? logisticEmail : undefined;
 
             emailService.sendAssignmentEmail({
                 to: toEmail,
@@ -119,8 +152,16 @@ exports.assignRoom = async (req, res) => {
 exports.rejectRoom = async (req, res) => {
     const { id } = req.params;
     const { reason } = req.body;
+    const userNrp = req.user ? req.user.nrp : null;
+    const teamRole = req.user ? req.user.teamRole : null;
 
     try {
+        // Check if processed by another admin
+        const [[requestData]] = await db.query(`SELECT status, processed_by_nrp FROM room_requests WHERE id = ?`, [id]);
+        if (requestData && requestData.status === 'PROSES' && requestData.processed_by_nrp && requestData.processed_by_nrp !== userNrp) {
+            return res.status(403).json({ success: false, error: 'Permohonan ini sedang diproses oleh admin lain.' });
+        }
+
         const [result] = await db.query(`
             UPDATE room_requests 
             SET status = 'REJECTED', logistics_notes = ?
@@ -133,15 +174,15 @@ exports.rejectRoom = async (req, res) => {
 
         // Fetch the updated request to send email
         const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name 
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
             FROM room_requests r 
             JOIN mentor m ON r.group_id = m.id 
             WHERE r.id = ?
         `, [id]);
 
-        if (request && request.leader_email) {
+        if (request && request.mentor_email) {
             emailService.sendRejectionEmail({
-                to: request.leader_email,
+                to: request.mentor_email,
                 groupName: request.group_name,
                 date: request.requested_date,
                 startTime: request.start_time,
@@ -164,13 +205,14 @@ exports.rejectRoom = async (req, res) => {
 exports.processRoom = async (req, res) => {
     const { id } = req.params;
     const assignedByName = req.user ? req.user.name : 'Logistik'; // from auth middleware
+    const processedByNrp = req.user ? req.user.nrp : null;
 
     try {
         const [result] = await db.query(`
             UPDATE room_requests 
-            SET assigned_by_name = ?, status = 'PROSES'
+            SET assigned_by_name = ?, processed_by_nrp = ?, status = 'PROSES'
             WHERE id = ?
-        `, [assignedByName, id]);
+        `, [assignedByName, processedByNrp, id]);
 
         if (result.affectedRows === 0) {
             return res.status(404).json({ success: false, error: 'Request not found' });
@@ -178,15 +220,15 @@ exports.processRoom = async (req, res) => {
 
         // Fetch the updated request to send email
         const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name 
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
             FROM room_requests r 
             JOIN mentor m ON r.group_id = m.id 
             WHERE r.id = ?
         `, [id]);
 
-        if (request && request.leader_email) {
+        if (request && request.mentor_email) {
             emailService.sendProcessEmail({
-                to: request.leader_email,
+                to: request.mentor_email,
                 groupName: request.group_name,
                 date: request.requested_date,
                 startTime: request.start_time,
