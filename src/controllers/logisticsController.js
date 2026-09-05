@@ -70,9 +70,12 @@ exports.assignRoom = async (req, res) => {
 
         // Fetch the request to check for conflicts
         const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact,
+                   p.nrp as pic_nrp
             FROM room_requests r 
             JOIN mentor m ON r.group_id = m.id 
+            LEFT JOIN ketua_kelompok k ON r.submitted_by_nrp = k.nrp
+            LEFT JOIN pic_ketua_kelompok p ON k.pic_id = p.id
             WHERE r.id = ?
         `, [id]);
 
@@ -113,10 +116,18 @@ exports.assignRoom = async (req, res) => {
 
         const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
 
+        // Compute PIC Email if PIC NRP exists
+        const picEmail = request.pic_nrp ? `${request.pic_nrp}@john.petra.ac.id` : null;
+
         // Send Email if applicable
-        if (request.mentor_email || logisticEmail) {
-            const toEmail = request.mentor_email || logisticEmail;
-            const ccEmail = request.mentor_email && logisticEmail ? logisticEmail : undefined;
+        if (request.mentor_email || logisticEmail || picEmail) {
+            const toEmail = request.mentor_email || logisticEmail || picEmail;
+            
+            const ccEmails = [];
+            if (request.mentor_email && logisticEmail) ccEmails.push(logisticEmail);
+            if (picEmail && toEmail !== picEmail) ccEmails.push(picEmail);
+            
+            const ccEmail = ccEmails.length > 0 ? ccEmails.join(',') : undefined;
 
             emailService.sendAssignmentEmail({
                 to: toEmail,

@@ -73,6 +73,24 @@ async function alter() {
   } catch (e) {
     console.error("Error creating/inserting settings:", e.message);
   }
+  try {
+    await db.query(`
+      CREATE TABLE IF NOT EXISTS pic_ketua_kelompok (
+        id INT AUTO_INCREMENT PRIMARY KEY,
+        nrp VARCHAR(50) NOT NULL UNIQUE
+      )
+    `);
+    console.log("Successfully created pic_ketua_kelompok table.");
+
+    await db.query("ALTER TABLE ketua_kelompok ADD COLUMN pic_id INT NULL");
+    console.log("Successfully added pic_id to ketua_kelompok.");
+  } catch (e) {
+    if (e.code === 'ER_DUP_FIELDNAME') {
+      console.log("Column pic_id already exists.");
+    } else {
+      console.error("Error creating pic_ketua_kelompok / altering ketua_kelompok:", e.message);
+    }
+  }
   
   process.exit();
 }

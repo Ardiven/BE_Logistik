@@ -41,8 +41,8 @@ exports.createRequest = async (req, res) => {
         const [result] = await db.query(`
             INSERT INTO room_requests 
             (ticket_code, group_id, requested_date, start_time, end_time, status, submitted_by_nrp)
-            VALUES (?, ?, ?, ?, ?, 'PENDING', ?)
-        `, [code, groupId, requestedDate, startTime, endTime, submittedByNrp]);
+            VALUES (?, ?, ?, ?, ?, ?, ?)
+        `, [code, groupId, requestedDate, startTime, endTime, 'PENDING', submittedByNrp]);
 
         // Fetch mentor name for email
         const [[mentor]] = await db.query('SELECT nama FROM mentor WHERE id = ?', [groupId]);
