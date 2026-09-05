@@ -116,15 +116,18 @@ exports.assignRoom = async (req, res) => {
 
         const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
 
-        // Compute PIC Email if PIC NRP exists
+        // Compute PIC & Ketua Email
         const picEmail = request.pic_nrp ? `${request.pic_nrp}@john.petra.ac.id` : null;
+        const ketuaEmail = request.submitted_by_nrp ? `${request.submitted_by_nrp}@john.petra.ac.id` : null;
 
         // Send Email if applicable
-        if (request.mentor_email || logisticEmail || picEmail) {
-            const toEmail = request.mentor_email || logisticEmail || picEmail;
+        if (request.mentor_email || logisticEmail || picEmail || ketuaEmail) {
+            // Prioritize Ketua, then Mentor, then Logistic
+            const toEmail = ketuaEmail || request.mentor_email || logisticEmail || picEmail;
             
             const ccEmails = [];
-            if (request.mentor_email && logisticEmail) ccEmails.push(logisticEmail);
+            if (ketuaEmail && request.mentor_email) ccEmails.push(request.mentor_email); // CC mentor if sent to ketua
+            if (logisticEmail && toEmail !== logisticEmail) ccEmails.push(logisticEmail);
             if (picEmail && toEmail !== picEmail) ccEmails.push(picEmail);
             
             const ccEmail = ccEmails.length > 0 ? ccEmails.join(',') : undefined;
