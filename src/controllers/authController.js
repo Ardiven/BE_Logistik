@@ -89,7 +89,7 @@ exports.login = async (req, res) => {
             }
         } else if (role === 'KETUA_KELOMPOK') {
             const [rows] = await db.query(`
-                SELECT k.id, k.nrp, a.nama, a.password 
+                SELECT k.id, k.nrp, a.nama
                 FROM ketua_kelompok k 
                 LEFT JOIN astor a ON k.nrp = a.nrp 
                 WHERE k.nrp = ?
