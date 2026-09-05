@@ -69,8 +69,8 @@ exports.login = async (req, res) => {
         return res.status(400).json({ success: false, message: 'Harap isi NRP/Username, Password, dan Role' });
     }
 
-    // As per PHP code: substr($username, 0, 9)
-    username = username.substring(0, 9);
+    // As per PHP code: substr($username, 0, 9) and convert to lowercase
+    username = username.substring(0, 9).toLowerCase();
 
     try {
         let user = null;
