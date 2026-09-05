@@ -5,7 +5,8 @@ exports.getGroups = async (req, res) => {
         const [rows] = await db.query(`
             SELECT m.*, j.hari, j.waktu
             FROM mentor m
-            LEFT JOIN jadwal j ON m.id = j.id_mentor
+            INNER JOIN jadwal j ON m.id = j.id_mentor
+            WHERE j.status = 1
             ORDER BY m.nama ASC
         `);
         const groups = rows.map(r => ({
