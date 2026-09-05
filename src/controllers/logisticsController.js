@@ -188,15 +188,32 @@ exports.rejectRoom = async (req, res) => {
 
         // Fetch the updated request to send email
         const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact,
+                   p.nrp as pic_nrp
             FROM room_requests r 
             JOIN mentor m ON r.group_id = m.id 
+            LEFT JOIN ketua_kelompok k ON r.submitted_by_nrp = k.nrp
+            LEFT JOIN pic_ketua_kelompok p ON k.pic_id = p.id
             WHERE r.id = ?
         `, [id]);
 
-        if (request && request.mentor_email) {
+        const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
+        const picEmail = request.pic_nrp ? `${request.pic_nrp}@john.petra.ac.id` : null;
+        const ketuaEmail = request.submitted_by_nrp ? `${request.submitted_by_nrp}@john.petra.ac.id` : null;
+
+        if (request.mentor_email || logisticEmail || picEmail || ketuaEmail) {
+            const toEmail = ketuaEmail || request.mentor_email || logisticEmail || picEmail;
+            
+            const ccEmails = [];
+            if (ketuaEmail && request.mentor_email) ccEmails.push(request.mentor_email);
+            if (logisticEmail && toEmail !== logisticEmail) ccEmails.push(logisticEmail);
+            if (picEmail && toEmail !== picEmail) ccEmails.push(picEmail);
+            
+            const ccEmail = ccEmails.length > 0 ? ccEmails.join(',') : undefined;
+
             emailService.sendRejectionEmail({
-                to: request.mentor_email,
+                to: toEmail,
+                cc: ccEmail,
                 groupName: request.group_name,
                 date: request.requested_date,
                 startTime: request.start_time,
@@ -234,15 +251,32 @@ exports.processRoom = async (req, res) => {
 
         // Fetch the updated request to send email
         const [[request]] = await db.query(`
-            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact 
+            SELECT r.*, m.nama as group_name, m.email as mentor_email, m.line as mentor_contact,
+                   p.nrp as pic_nrp
             FROM room_requests r 
             JOIN mentor m ON r.group_id = m.id 
+            LEFT JOIN ketua_kelompok k ON r.submitted_by_nrp = k.nrp
+            LEFT JOIN pic_ketua_kelompok p ON k.pic_id = p.id
             WHERE r.id = ?
         `, [id]);
 
-        if (request && request.mentor_email) {
+        const logisticEmail = req.user && req.user.nrp ? `${req.user.nrp}@john.petra.ac.id` : null;
+        const picEmail = request.pic_nrp ? `${request.pic_nrp}@john.petra.ac.id` : null;
+        const ketuaEmail = request.submitted_by_nrp ? `${request.submitted_by_nrp}@john.petra.ac.id` : null;
+
+        if (request.mentor_email || logisticEmail || picEmail || ketuaEmail) {
+            const toEmail = ketuaEmail || request.mentor_email || logisticEmail || picEmail;
+            
+            const ccEmails = [];
+            if (ketuaEmail && request.mentor_email) ccEmails.push(request.mentor_email);
+            if (logisticEmail && toEmail !== logisticEmail) ccEmails.push(logisticEmail);
+            if (picEmail && toEmail !== picEmail) ccEmails.push(picEmail);
+            
+            const ccEmail = ccEmails.length > 0 ? ccEmails.join(',') : undefined;
+
             emailService.sendProcessEmail({
-                to: request.mentor_email,
+                to: toEmail,
+                cc: ccEmail,
                 groupName: request.group_name,
                 date: request.requested_date,
                 startTime: request.start_time,

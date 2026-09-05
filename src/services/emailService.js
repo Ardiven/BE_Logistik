@@ -116,6 +116,7 @@ const sendRejectionEmail = async (data) => {
         const info = await transporter.sendMail({
             from: '"TPS Logistik" <no-reply@tps.petra.ac.id>',
             to: data.to,
+            cc: data.cc,
             subject: 'Pemberitahuan: Peminjaman Ruangan KTB Ditolak',
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
@@ -154,6 +155,7 @@ const sendProcessEmail = async (data) => {
         const info = await transporter.sendMail({
             from: '"TPS Logistik" <no-reply@tps.petra.ac.id>',
             to: data.to,
+            cc: data.cc,
             subject: 'Pemberitahuan: Permohonan Ruangan Sedang Diproses',
             html: `
                 <div style="font-family: Arial, sans-serif; padding: 20px; color: #333;">
