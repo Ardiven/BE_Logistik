@@ -6,15 +6,20 @@ exports.createRequest = async (req, res) => {
     const submittedByNrp = req.user ? req.user.nrp : null;
 
     try {
-        // H-3 Validation
-        const [[{ days_diff }]] = await db.query('SELECT DATEDIFF(?, CURDATE()) AS days_diff', [requestedDate]);
-        if (days_diff < 3) {
-            const minDate = new Date();
-            minDate.setDate(minDate.getDate() + 3);
-            return res.status(422).json({
-                success: false,
-                error: `Permohonan minimal harus diajukan 3 hari sebelum jadwal pelaksanaan (minimal tanggal ${minDate.toISOString().split('T')[0]}).`
-            });
+        // H-3 Validation Check Setting
+        const [settingsRows] = await db.query('SELECT setting_value FROM settings WHERE setting_key = "IS_H3_RESTRICTION_ENABLED"');
+        const isH3Enabled = settingsRows.length === 0 || settingsRows[0].setting_value !== 'false';
+
+        if (isH3Enabled) {
+            const [[{ days_diff }]] = await db.query('SELECT DATEDIFF(?, CURDATE()) AS days_diff', [requestedDate]);
+            if (days_diff < 3) {
+                const minDate = new Date();
+                minDate.setDate(minDate.getDate() + 3);
+                return res.status(422).json({
+                    success: false,
+                    error: `Permohonan minimal harus diajukan 3 hari sebelum jadwal pelaksanaan (minimal tanggal ${minDate.toISOString().split('T')[0]}).`
+                });
+            }
         }
 
         // Duplication Validation (ISO Week)
