@@ -76,16 +76,29 @@ exports.login = async (req, res) => {
         let user = null;
 
         // Check database first if user has the correct role
-        if (role === 'LOGISTIK') {
+        console.log(role);
+        if (role === 'TIM') {
+            console.log('1');
             const [rows] = await db.query(`
                 SELECT * FROM data_tim 
-                WHERE nrp = ? AND (
-                    tim = 'logistik' OR 
-                    (role = 'BPH' AND bidang = 'office')
-                )
+                WHERE nrp = ?
             `, [username]);
+
             if (rows.length > 0) {
                 user = rows[0];
+                console.log('1');
+                console.log(user);
+                // Determine the actual role for the rest of the system
+                if (user.role === 'BPH' && user.bidang === 'Office') {
+                    console.log('1');
+                    role = 'BPH_OFFICE';
+                } else if (user.role === 'BPH') {
+                    role = 'BPH';
+                } else if (user.tim === 'Logistik') {
+                    role = 'LOGISTIK';
+                } else {
+                    return res.status(401).json({ success: false, message: 'Akun Anda tidak memiliki akses ke fitur ini' });
+                }
             }
         } else if (role === 'KETUA_KELOMPOK') {
             const [rows] = await db.query(`
