@@ -92,6 +92,13 @@ async function alter() {
     }
   }
   
+  try {
+    await db.query("ALTER TABLE room_requests MODIFY COLUMN status ENUM('PENDING','PROSES','ASSIGNED','REJECTED') CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci DEFAULT 'PENDING'");
+    console.log("Successfully updated status ENUM to include PROSES.");
+  } catch (e) {
+    console.error("Error updating status ENUM:", e.message);
+  }
+
   process.exit();
 }
 
