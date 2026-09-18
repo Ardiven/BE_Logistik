@@ -35,6 +35,7 @@ app.get('/api/admin/materials', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), 
 app.get('/api/admin/dashboard', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getDashboardStats);
 app.get('/api/admin/presensi/:materiId', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getPresensi);
 app.get('/api/admin/assessment/:materiId', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getAssessment);
+app.post('/api/admin/export-sheets', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.exportToSheets);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
