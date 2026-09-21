@@ -102,21 +102,14 @@ exports.exportToSheets = async (req, res) => {
         }
         const spreadsheetId = settingsRows[0].setting_value;
 
-        // 2. Load credentials from .env
-        const credString = process.env.GOOGLE_CREDENTIALS;
-        if (!credString) {
-            return res.status(500).json({ success: false, error: 'Variabel GOOGLE_CREDENTIALS belum diatur di file .env backend.' });
-        }
-
-        let credentials;
-        try {
-            credentials = JSON.parse(credString);
-        } catch (e) {
-            return res.status(500).json({ success: false, error: 'Format GOOGLE_CREDENTIALS di .env tidak valid (harus berupa string JSON).' });
+        // 2. Load credentials from service-account-credentials.json
+        const keyFilePath = path.join(__dirname, '../../service-account-credentials.json');
+        if (!fs.existsSync(keyFilePath)) {
+            return res.status(500).json({ success: false, error: 'File service-account-credentials.json tidak ditemukan.' });
         }
 
         const auth = new google.auth.GoogleAuth({
-            credentials,
+            keyFile: keyFilePath,
             scopes: ['https://www.googleapis.com/auth/spreadsheets']
         });
         const client = await auth.getClient();
@@ -154,7 +147,7 @@ exports.exportToSheets = async (req, res) => {
 
         if (type === 'absen' || type === 'both') {
             const [absenData] = await db.query(`
-                SELECT m.nama AS 'Nama Maba', a.nrp_maba AS 'NRP', a.id_kelompok AS 'Kelompok', a.status AS 'Status', a.\`keaktifan maba\` AS 'Keaktifan'
+                SELECT m.nama AS 'Nama Maba', a.nrp_maba AS 'NRP', a.id_kelompok AS 'Kelompok', a.status AS 'Status', a.\`keaktifan maba\` AS 'Keaktifan', refleksi_maba
                 FROM absen_leg a
                 LEFT JOIN maba m ON a.nrp_maba = m.nrp
             `);

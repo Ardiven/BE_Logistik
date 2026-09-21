@@ -78,7 +78,7 @@ web_modules/
 .env.test
 .env.production
 .env.local
-
+service-account-credentials.json
 # parcel-bundler cache
 .cache
 .parcel-cache
