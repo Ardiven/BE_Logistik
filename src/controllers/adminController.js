@@ -147,7 +147,7 @@ exports.exportToSheets = async (req, res) => {
 
         if (type === 'absen' || type === 'both') {
             const [absenData] = await db.query(`
-                SELECT m.nama AS 'Nama Maba', a.nrp_maba AS 'NRP', a.id_kelompok AS 'Kelompok', a.status AS 'Status', a.\`keaktifan maba\` AS 'Keaktifan', refleksi_maba
+                SELECT m.nama AS 'Nama Maba', a.nrp_maba AS 'NRP', a.materi AS 'LEG KE-', a.id_kelompok AS 'Kelompok', a.status AS 'Status', a.\`keaktifan maba\` AS 'Keaktifan', refleksi_maba
                 FROM absen_leg a
                 LEFT JOIN maba m ON a.nrp_maba = m.nrp
             `);
