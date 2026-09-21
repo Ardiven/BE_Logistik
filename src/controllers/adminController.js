@@ -139,6 +139,51 @@ exports.exportToSheets = async (req, res) => {
                     valueInputOption: 'USER_ENTERED',
                     resource: { values }
                 });
+
+                // Get sheet ID to apply formatting
+                const spreadsheet = await sheets.spreadsheets.get({ spreadsheetId });
+                const sheet = spreadsheet.data.sheets.find(s => s.properties.title === sheetName);
+                if (sheet) {
+                    const sheetId = sheet.properties.sheetId;
+                    
+                    const requests = [
+                        // Auto-resize columns to fit content
+                        {
+                            autoResizeDimensions: {
+                                dimensions: {
+                                    sheetId: sheetId,
+                                    dimension: 'COLUMNS',
+                                    startIndex: 0,
+                                    endIndex: headers.length
+                                }
+                            }
+                        },
+                        // Format header: Bold text and light gray background
+                        {
+                            repeatCell: {
+                                range: {
+                                    sheetId: sheetId,
+                                    startRowIndex: 0,
+                                    endRowIndex: 1,
+                                    startColumnIndex: 0,
+                                    endColumnIndex: headers.length
+                                },
+                                cell: {
+                                    userEnteredFormat: {
+                                        backgroundColor: { red: 0.9, green: 0.9, blue: 0.9 },
+                                        textFormat: { bold: true }
+                                    }
+                                },
+                                fields: 'userEnteredFormat(backgroundColor,textFormat)'
+                            }
+                        }
+                    ];
+
+                    await sheets.spreadsheets.batchUpdate({
+                        spreadsheetId,
+                        resource: { requests }
+                    });
+                }
             } catch (e) {
                 console.error(`Failed to upload to sheet ${sheetName}:`, e);
                 throw new Error(`Gagal upload ke sheet ${sheetName} (Pastikan Service Account memiliki akses Editor ke Spreadsheet): ${e.message}`);
