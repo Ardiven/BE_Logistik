@@ -86,6 +86,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
                 posisi_terakhir: record.posisi_terakhir,
                 real_watch: record.real_watch
             };
+            console.log(progressMap[record.nrp]);
         });
 
         const resultList = [];
