@@ -19,15 +19,15 @@ exports.getVideoBriefingProgress = async (req, res) => {
         });
 
         const sheets = google.sheets({ version: 'v4', auth });
-        const spreadsheetId = '16ECXrbltYcOV2vnUqJWMi8ucFaRaOdeao2ho89JufJA';
-        
+        const spreadsheetId = '1JwUQ3WxAPCSV_LXz2-6RYBM_wftdOoJnSAZF0PdPL3I';
+
         const sheetMetadata = await sheets.spreadsheets.get({ spreadsheetId });
         const sheet = sheetMetadata.data.sheets.find(s => s.properties.sheetId === 871330183) || sheetMetadata.data.sheets[0];
         const sheetName = sheet.properties.title;
 
         const response = await sheets.spreadsheets.values.get({
             spreadsheetId,
-            range: `${sheetName}!A:Z`, 
+            range: `${sheetName}!A:Z`,
         });
 
         const rows = response.data.values;
@@ -38,7 +38,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
         const headers = rows[0].map(h => h.trim());
         const nrpIndex = headers.findIndex(h => h.toLowerCase() === 'nrp');
         const namaIndex = headers.findIndex(h => h.toLowerCase() === 'nama' || h.toLowerCase() === 'name');
-        
+
         const legColumns = [];
         headers.forEach((header, index) => {
             if (/^(leg\s*)?\d+$/i.test(header) || !isNaN(header)) {
@@ -106,7 +106,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
                     if (!legProgress) {
                         status = 'Not Watched';
                     } else {
-                        status = 'Not Watched';
+                        status = 'Watched';
                         posisi = formatSecondsToHHMMSS(legProgress.posisi_terakhir);
                         watch = formatSecondsToHHMMSS(legProgress.real_watch);
                     }
