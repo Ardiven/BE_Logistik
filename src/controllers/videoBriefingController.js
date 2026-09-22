@@ -81,6 +81,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
             if (!progressMap[record.nrp]) {
                 progressMap[record.nrp] = {};
             }
+            console.log(record);
             progressMap[record.nrp][record.materi] = {
                 posisi_terakhir: record.posisi_terakhir,
                 real_watch: record.real_watch
