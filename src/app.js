@@ -31,11 +31,13 @@ app.get('/api/settings', verifyToken, verifyRole(['LOGISTIK', 'BPH_OFFICE']), se
 app.put('/api/settings', verifyToken, verifyRole(['LOGISTIK', 'BPH_OFFICE']), settingsController.updateSettings);
 
 const adminController = require('./controllers/adminController');
+const videoBriefingController = require('./controllers/videoBriefingController');
 app.get('/api/admin/materials', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getMaterials);
 app.get('/api/admin/dashboard', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getDashboardStats);
 app.get('/api/admin/presensi/:materiId', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getPresensi);
 app.get('/api/admin/assessment/:materiId', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.getAssessment);
 app.post('/api/admin/export-sheets', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), adminController.exportToSheets);
+app.get('/api/admin/video-briefing-progress', verifyToken, verifyRole(['BPH', 'BPH_OFFICE']), videoBriefingController.getVideoBriefingProgress);
 
 const PORT = process.env.PORT || 3000;
 app.listen(PORT, () => {
