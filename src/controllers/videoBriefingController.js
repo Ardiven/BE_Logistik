@@ -106,7 +106,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
                 const legSheetStatus = user[`leg_${leg}`];
                 const legProgress = userProgress[leg];
                 let status = '-';
-                let posisi = legProgress?.posisi_terakhir ? 'ada' : 'ga ada';
+                let posisi = legProgress?.posisi_terakhir ? legProgress?.posisi_terakhir : '-';
                 let watch = '-';
 
                 // user says: ga datang = data di sheetnya berupa false
