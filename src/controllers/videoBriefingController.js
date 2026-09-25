@@ -137,6 +137,7 @@ exports.getVideoBriefingProgress = async (req, res) => {
                 ...legStatuses
             });
         });
+        res.set('Cache-Control', 'no-store');
 
         res.json({
             success: true,
