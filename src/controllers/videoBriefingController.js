@@ -78,6 +78,12 @@ exports.getVideoBriefingProgress = async (req, res) => {
 
         const progressMap = {};
         progressRecords.forEach(record => {
+            console.log("=== MASUK SEBELUM PROGRESS MAP ===");
+            console.log("record:", record);
+
+            console.log("NRP:", record?.nrp);
+            console.log("MATERI:", record?.materi);
+
             if (!progressMap[record.nrp]) {
                 progressMap[record.nrp] = {};
             }
